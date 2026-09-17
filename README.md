@@ -1,11 +1,22 @@
 # iphone_duo_layout
 
+![iPhone Duo layout package overview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/docs/media/hero.png)
+
 為 **iPhone Duo 佈局適配（layout）**建立的 Flutter package，橋接原生佈局、保留區域、鉸鏈資訊及系統工具列。
 
 將 iOS 原生的 **Reserved Regions（保留區域）** 與 **Hinge（鉸鏈）** 資訊提供給 Flutter。
 目前實作①區域查詢與觀察、③原生工具列，以及④中的鉸鏈狀態／角度橋接。
 ②新增實驗性 split／span 原型：Swift 探測 Arrangement 布局結果，Flutter 呈現內容。
 此布局橋接尚未完成 SDK 編譯／裝置驗證；多視窗及外螢幕 UI 留待後續模組。
+
+## 功能示意
+
+![Illustrated split, span, reserved regions and native toolbar preview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/docs/media/layout-preview.gif)
+
+以上為使用範例資料繪製的概念介面與動畫，**不是模擬器或真機錄影**；
+原生新 SDK 的編譯與裝置行為仍待驗證，動畫不代表逐幀原生同步。
+
+[查看 split／span 對照圖](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/docs/media/layout-modes.png) · [素材與重新產生方式](docs/media/README.md)
 
 ## 目前狀態
 
