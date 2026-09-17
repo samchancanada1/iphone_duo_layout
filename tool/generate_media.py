@@ -10,7 +10,7 @@ import argparse
 from PIL import Image, ImageDraw, ImageFont
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('output', nargs='?', type=Path, default=Path(__file__).resolve().parents[1] / 'docs/media')
+parser.add_argument('output', nargs='?', type=Path, default=Path(__file__).resolve().parents[1] / 'doc/media')
 parser.add_argument('--qa', action='store_true', help='Also render static animation keyframes for inspection.')
 args = parser.parse_args()
 OUT = args.output

@@ -1,6 +1,6 @@
 # iphone_duo_layout
 
-![iPhone Duo layout package overview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/docs/media/hero.png)
+![iPhone Duo layout package overview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/hero.png)
 
 為 **iPhone Duo 佈局適配（layout）**建立的 Flutter package，橋接原生佈局、保留區域、鉸鏈資訊及系統工具列。
 
@@ -11,12 +11,12 @@
 
 ## 功能示意
 
-![Illustrated split, span, reserved regions and native toolbar preview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/docs/media/layout-preview.gif)
+![Illustrated split, span, reserved regions and native toolbar preview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/layout-preview.gif)
 
 以上為使用範例資料繪製的概念介面與動畫，**不是模擬器或真機錄影**；
 原生新 SDK 的編譯與裝置行為仍待驗證，動畫不代表逐幀原生同步。
 
-[查看 split／span 對照圖](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/docs/media/layout-modes.png) · [素材與重新產生方式](docs/media/README.md)
+[查看 split／span 對照圖](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/layout-modes.png) · [素材與重新產生方式](doc/media/README.md)
 
 ## 目前狀態
 
@@ -29,16 +29,16 @@
 - 已移除自訂 SDK 編譯開關，不需要額外設定 Swift flag。
 - 使用包含相應 API 宣告的 SDK 編譯；執行時保留 iOS 27.1 版本檢查。
 - 只傳遞原生 API 回傳的資料，不以螢幕尺寸推測摺痕。
-- `publish_to: none`；目前是本地開發 package。
+- `0.1.0-dev.1` 為實驗性預發布版本；採用 [MIT 授權](LICENSE)。
+- 原生 Swift 程式碼需要包含相應 iOS 27.1 API 的 SDK；Xcode 26.4 無法編譯這些宣告。
 
 ## 安裝
 
-在使用端的 `pubspec.yaml` 加入（調整為 package 的實際路徑）：
+在使用端的 `pubspec.yaml` 加入預發布版本：
 
 ```yaml
 dependencies:
-  iphone_duo_layout:
-    path: ../iphone_duo_layout
+  iphone_duo_layout: 0.1.0-dev.1
 ```
 
 ## 使用

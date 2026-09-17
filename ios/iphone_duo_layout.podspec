@@ -10,8 +10,8 @@ Pod::Spec.new do |s|
 Native iPhone Duo layout adaptation for Flutter: reserved regions, hinge updates, adaptive layouts and system toolbars.
                        DESC
   s.homepage         = 'https://github.com/samchancanada1/iphone_duo_layout'
-  s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.license          = { :type => 'MIT', :file => '../LICENSE' }
+  s.author           = 'samchancanada1'
   s.source           = { :path => '.' }
   s.source_files = 'iphone_duo_layout/Sources/iphone_duo_layout/**/*'
   s.dependency 'Flutter'

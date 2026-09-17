@@ -1,3 +1,14 @@
+## 0.1.0-dev.1
+
+- Initial experimental prerelease under the MIT license.
+- Bridge native reserved regions, hinge updates, system toolbars and experimental
+  Arrangement split/span layout results to Flutter.
+- Include diagnostic examples, regression tests and illustrated presentation assets.
+- Dart analysis and 42 package/example tests pass. Swift syntax parsing passes;
+  compilation against the new iOS SDK and device behavior remain unverified.
+- Native source requires an SDK providing the referenced iOS 27.1 declarations;
+  the runtime availability guard does not make older SDKs compile these APIs.
+
 ## Unreleased — Package rename
 
 - Rename the package to `iphone_duo_layout` to describe its iPhone Duo layout focus.
@@ -59,7 +70,7 @@
 - Align Dart statuses, existing test fixtures, and documentation with direct use.
 - Build and test execution deferred at the user's request.
 
-## 0.1.0-dev.1
+## Initial prototype (unreleased)
 
 - Focus on native iOS reserved-region data and updates.
 - Add typed results, explicit unsupported states, and local-coordinate helper.
