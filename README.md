@@ -1,47 +1,58 @@
 # iphone_duo_layout
 
+**English** | [繁體中文](https://github.com/samchancanada1/iphone_duo_layout/blob/main/README.zh-TW.md)
+
 ![iPhone Duo layout package overview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/hero.png)
 
-為 **iPhone Duo 佈局適配（layout）**建立的 Flutter package，橋接原生佈局、保留區域、鉸鏈資訊及系統工具列。
+A Flutter package for **iPhone Duo layout adaptation**, bridging native layouts,
+reserved regions, hinge information, and system toolbars.
 
-將 iOS 原生的 **Reserved Regions（保留區域）** 與 **Hinge（鉸鏈）** 資訊提供給 Flutter。
-目前實作①區域查詢與觀察、③原生工具列，以及④中的鉸鏈狀態／角度橋接。
-②新增實驗性 split／span 原型：Swift 探測 Arrangement 布局結果，Flutter 呈現內容。
-此布局橋接尚未完成 SDK 編譯／裝置驗證；多視窗及外螢幕 UI 留待後續模組。
+The package exposes native iOS **Reserved Regions** and **Hinge** information to
+Flutter. It implements region queries and observation, native toolbars, and hinge
+state and angle bridging. An experimental split/span prototype uses Swift to
+measure native Arrangement layouts while Flutter renders the content.
+Native SDK compilation and device validation of this layout bridge are still
+pending. Multi-window and external-display interfaces are left for future modules.
 
-## 功能示意
+## Feature preview
 
 ![Illustrated split, span, reserved regions and native toolbar preview](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/layout-preview.gif)
 
-以上為使用範例資料繪製的概念介面與動畫，**不是模擬器或真機錄影**；
-原生新 SDK 的編譯與裝置行為仍待驗證，動畫不代表逐幀原生同步。
+These interfaces and animations use sample data and are **concept illustrations,
+not simulator or device recordings**. Native SDK compilation and device behavior
+still need validation. The animation does not demonstrate frame-by-frame native
+synchronization.
 
-[查看 split／span 對照圖](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/layout-modes.png) · [素材與重新產生方式](doc/media/README.md)
+[View the split/span comparison](https://raw.githubusercontent.com/samchancanada1/iphone_duo_layout/main/doc/media/layout-modes.png) · [Assets and regeneration instructions](doc/media/README.md)
 
-## 目前狀態
+## Current status
 
-**原生 API 已直接啟用；Dart 分析與測試已通過，原生新 SDK 編譯及裝置驗證仍待完成。**
+**Native API calls are enabled directly. Dart analysis and tests pass; compilation
+with the required native SDK and device validation are still pending.**
 
-- `read()` 直接呼叫 `UIView.reservedRegions(kind:)`。
-- `NativeReservedRegions.watch()` 在支援的 iOS 版本訂閱並回報區域變更。
-- `NativeHinge.watch()` 透過 SwiftUI `onHingeChange` 回報鉸鏈狀態與角度。
-- `NativeToolbarHost` 接收 Dart 設定，建立原生導航工具列並回傳按鈕事件。
-- 已移除自訂 SDK 編譯開關，不需要額外設定 Swift flag。
-- 使用包含相應 API 宣告的 SDK 編譯；執行時保留 iOS 27.1 版本檢查。
-- 只傳遞原生 API 回傳的資料，不以螢幕尺寸推測摺痕。
-- `0.1.0-dev.1` 為實驗性預發布版本；採用 [MIT 授權](LICENSE)。
-- 原生 Swift 程式碼需要包含相應 iOS 27.1 API 的 SDK；Xcode 26.4 無法編譯這些宣告。
+- `read()` calls `UIView.reservedRegions(kind:)` directly.
+- `NativeReservedRegions.watch()` subscribes to region updates on supported iOS versions.
+- `NativeHinge.watch()` reports hinge state and angle through SwiftUI `onHingeChange`.
+- `NativeToolbarHost` accepts Dart configuration, creates native navigation toolbars,
+  and returns button events.
+- No custom SDK compilation switch or additional Swift flag is required.
+- Compile with an SDK that includes the referenced API declarations. Runtime checks
+  for iOS 27.1 remain in place.
+- Only native API data is reported; the package does not infer folds from screen dimensions.
+- `0.1.0-dev.1` is an experimental prerelease under the [MIT license](LICENSE).
+- The Swift source requires an SDK with the corresponding iOS 27.1 API declarations;
+  Xcode 26.4 cannot compile these references.
 
-## 安裝
+## Installation
 
-在使用端的 `pubspec.yaml` 加入預發布版本：
+Add the prerelease version to your application's `pubspec.yaml`:
 
 ```yaml
 dependencies:
   iphone_duo_layout: 0.1.0-dev.1
 ```
 
-## 使用
+## Usage
 
 ```dart
 import 'package:iphone_duo_layout/iphone_duo_layout.dart';
@@ -50,59 +61,65 @@ final regionsApi = NativeReservedRegions();
 final snapshot = await regionsApi.read();
 
 if (snapshot.isAvailable) {
-  // 空集合表示「查詢成功，目前沒有啟用中的保留區域」。
+  // An empty collection means the query succeeded with no active reserved regions.
   for (final region in snapshot.regions!) {
     print('${region.kind}: ${region.bounds}');
   }
 } else {
-  // 不支援不代表沒有摺疊或鏡頭區域。
+  // Unavailable data does not imply the absence of fold or camera regions.
   print(snapshot.availability);
 }
 
 final subscription = regionsApi.watch().listen(
   (snapshot) {
-    // 將原生區域資訊交給既有 Flutter 頁面使用。
+    // Pass native region information to your existing Flutter page.
   },
   onError: (Object error) {
-    // 通道或資料格式錯誤不會被轉成空區域。
+    // Channel and data format errors are not converted into empty region lists.
   },
 );
 
-// 頁面離開或不再需要資料時：
+// Cancel when leaving the page or when the data is no longer needed.
 await subscription.cancel();
 ```
 
-`watch()` 的所有訂閱者共用一個原生訂閱。第一個訂閱者取得原生初始結果；
-後加入的訂閱者先收到最近一次成功接收的快照，再接收後續變更，不必另行
-呼叫 `read()`。若尚未收到初始結果，所有訂閱者共同等待該結果。
-重播的是最近收到的取樣資料，不是每次訂閱都重新同步查詢。
+All `watch()` listeners share one native subscription. The first listener receives
+the initial native result. Later listeners receive the most recently received
+snapshot before subsequent updates, without needing a separate `read()` call.
+If the initial result has not arrived, all listeners wait for it. Replayed data
+is the latest sample, not a new synchronous query for each listener.
 
-通道啟動失敗（包括 plugin 未註冊）會傳給 `onError`，並結束該次觀察；
-重新訂閱即可重試。個別原生事件或資料格式錯誤會傳給 `onError`，串流仍可
-繼續接收後續事件。`read()` 找不到 plugin 時仍回傳 `pluginUnavailable`。
+Channel startup failures, including an unregistered plugin, reach `onError` and
+end that observation session. Subscribe again to retry. Individual native event
+or data format errors reach `onError`, but the stream can continue receiving
+later events. If the plugin is missing, `read()` returns `pluginUnavailable`.
 
-最後一個訂閱取消時會清除快照快取並釋放原生訂閱；下次訂閱取得新的原生
-初始資料。原生啟動與取消按順序執行，避免快速切換頁面時舊取消動作干擾
-新訂閱。需要知道原生取消是否成功時，請 `await subscription.cancel()`。
+Canceling the last listener clears the snapshot cache and releases the native
+subscription. The next subscription obtains a fresh initial native result.
+Native startup and cancellation are serialized so that cancellation from a
+previous page cannot interfere with a new subscription during rapid navigation.
+Use `await subscription.cancel()` if you need to know whether native cleanup succeeded.
 
-## Arrangement split／span 原型（②，實驗性）
+## Arrangement split/span prototype (experimental)
 
 ```dart
-// 分區：兩個不同 Flutter widgets；位置由原生 Arrangement 的測量結果決定。
+// Split: place two Flutter widgets using native Arrangement measurements.
 NativeArrangement.split(
   axis: NativeArrangementAxis.horizontal,
   primary: VideoWidget(),
   secondary: PlaylistWidget(),
 );
 
-// 跨區：同一個 widget 佔滿整個容器，不查詢原生 Arrangement。
+// Span: fill the container with one widget without querying native Arrangement.
 NativeArrangement.span(child: MapWidget());
 ```
 
-兩種模式都只有一個 Flutter engine。這裡的左右區域屬於同一 App 的視窗，
-不是內外顯示器或其他 App 的視窗。span 填滿的是 widget 可用空間，不會隱藏原生工具列。
+Both modes use a single Flutter engine. The two regions belong to the same app
+window, not separate inner/outer displays or another app's window. Span fills
+the space available to the widget; it does not hide native toolbars.
 
-需要切換模式並保留兩區 State 時，使用同一個元件並保持兩個 child 的類型及 key：
+To switch modes while preserving state in both panes, keep the same component
+and preserve each child's type and key:
 
 ```dart
 Expanded(
@@ -116,87 +133,110 @@ Expanded(
 );
 ```
 
-span 使用 primary；保留的 secondary 會 Offstage，停用觸控、焦點、semantics 和
-TickerMode。此方式保留一般 Widget State；不會自動暫停你的 Timer、網路或媒體播放。
-若改變 child 的類型／key，或不再傳入 secondary，仍遵循 Flutter 一般卸載規則。
-子內容應以 LayoutBuilder 的 constraints 適應區域大小，MediaQuery 仍描述 Flutter view。
+Span displays the primary child. The retained secondary child is placed
+`Offstage`, with touch input, focus, semantics, and `TickerMode` disabled.
+This preserves ordinary widget state but does not automatically pause timers,
+network activity, or media playback. Changing a child's type/key or removing the
+secondary child still follows Flutter's normal unmounting rules.
+Children should use `LayoutBuilder` constraints to adapt to their pane size;
+`MediaQuery` continues to describe the Flutter view.
 
-**split 資料流程**
+**Split data flow**
 
-1. Flutter 在 layout 後取得容器位置、大小，以及 Flutter view 的邏輯尺寸。
-2. Swift 在同一個 Flutter view 內加入透明、不接收輸入的 UIArrangementViewController，
-   其 frame 與該容器一致；primary／secondary 是空白原生 view controllers。
-3. 使用 `.split` 或 `.split.axes(...)` 排列，讀取子 view 實際 bounds 的座標轉換結果、
-   placement state 的 zIndex，以及階層中可觀察到的可見狀態。
-4. Dart 收到符合本次 viewport 的結果，再用 Positioned 放置真正的 widgets。
+1. After layout, Flutter obtains the container's position and size and the logical
+   dimensions of the Flutter view.
+2. Swift adds a transparent, noninteractive `UIArrangementViewController` inside
+   the same Flutter view, matching the container's frame. Its primary and secondary
+   children are empty native view controllers.
+3. The controller uses `.split` or `.split.axes(...)`. The bridge reads converted
+   coordinates for the child views' actual bounds, the placement state's `zIndex`,
+   and visibility observable in the view hierarchy.
+4. Dart accepts results matching the current viewport and uses `Positioned` to
+   place the actual Flutter widgets.
 
-`axis` 支援 automatic、horizontal、vertical；系統可能只保留一區，
-不是永遠保證兩區同時可見。這版不提供 overlay style。
-前景最多每 100 ms 查詢一次；同時只有一個未完成查詢。此為布局快照原型，
-**不宣稱逐幀動畫同步，也不是 Apple 官方提供的 Flutter 布局 API。**
+`axis` supports `automatic`, `horizontal`, and `vertical`. The system may retain
+only one visible pane; two visible panes are not guaranteed. This release does
+not provide an overlay style. Queries run at most once every 100 ms in the
+foreground, with only one query in flight at a time. This is a layout snapshot
+prototype: **it does not claim frame-by-frame animation synchronization and is
+not an official Apple Flutter layout API.**
 
-`ArrangementSnapshot` 包含：availability、viewport（相對 Flutter view）、viewSize，
-以及 primary／secondary 的 bounds（相對 viewport）、visible、zIndex。
-未取得資料時，pane 欄位為 null。span 不產生假的原生 snapshot。
-`onSnapshotChanged` 只回報 split 的快照變化。
+`ArrangementSnapshot` contains `availability`, `viewport` relative to the Flutter
+view, `viewSize`, and the primary/secondary panes' `bounds` relative to the viewport,
+`visible`, and `zIndex`. Pane fields are null when data is unavailable.
+Span does not fabricate a native snapshot. `onSnapshotChanged` only reports
+snapshot changes in split mode.
 
-**範圍與錯誤處理**
+**Scope and error handling**
 
-- 需要有限且非零的寬高，請用 Expanded／SizedBox；第一版只支援平移、無旋轉或縮放，
-  且 viewport 完整位於 Flutter view 內。不要把整個 Arrangement 放在捲動容器內；
-  每一區的內容可以自行捲動。
-- 預設缺少原生資料時顯示狀態，不自行產生 50/50 分區。可以透過
-  `unavailableBuilder(context, snapshot, error)` 提供自己的替代 UI。
-- availability：available、waiting、osUnavailable、unsupportedPlatform、viewUnavailable、
-  inactive、geometryMismatch、unsupportedGeometry。新 API 要求 iOS 27.1。
-- 不支援的平台／系統停止輪詢。通道或格式錯誤透過 onError／FlutterError 回報並停止輪詢；
-  可透過模式切換、axis 更新或重新掛載重試。暫時尚未附著／幾何不符時前景持續重試。
-- 切換 span、退背景、祖先 TickerMode 停用或卸載會釋放原生探測容器；
-  恢復 split／前景／TickerMode 後重新建立。只設定 Offstage 不會停用取樣，
-  自訂隱藏容器請同時使用 TickerMode(enabled: false)。
-  UI client 初始化會清除 Dart hot restart 留下的舊探測容器。
-- 不替換 window root，可以與③的原生工具列容器並存；整合行為仍待真機驗證。
+- Width and height must be finite and nonzero; use `Expanded` or `SizedBox`.
+  This version supports translation only, without rotation or scaling, and requires
+  the viewport to fit entirely inside the Flutter view. Do not place the entire
+  Arrangement widget inside a scrolling container; each pane's content may scroll.
+- When native data is unavailable, the default UI displays the status instead of
+  inventing a 50/50 split. Supply your own fallback with
+  `unavailableBuilder(context, snapshot, error)`.
+- Availability values are `available`, `waiting`, `osUnavailable`,
+  `unsupportedPlatform`, `viewUnavailable`, `inactive`, `geometryMismatch`, and
+  `unsupportedGeometry`. The referenced APIs require iOS 27.1.
+- Polling stops on unsupported platforms or operating systems. Channel and format
+  errors are reported through `onError`/`FlutterError` and stop polling. Retry by
+  switching modes, changing the axis, or remounting the widget. Temporary attachment
+  or geometry mismatches continue to retry in the foreground.
+- Switching to span, entering the background, disabling an ancestor `TickerMode`,
+  or unmounting releases the native probe container. It is recreated when split
+  mode, foreground activity, or `TickerMode` resumes. `Offstage` alone does not
+  disable sampling; custom hidden containers should also use
+  `TickerMode(enabled: false)`. UI client initialization removes stale probe
+  containers left behind by a Dart hot restart.
+- The probe does not replace the window root and can coexist with the native
+  toolbar container. This integration still requires device validation.
 
-**尚待驗證的核心假設**：空白原生 child 是否與真實內容獲得一致的 Arrangement 決策；
-透明容器內部是否完全無可見裝飾；safe area、區域可見性、轉場和座標是否與 Flutter 同步。
-目前以原生階層和 placement state 判斷 visible，不是已確認完整的 Arrangement 可見性語意。
-原型沒有把 Flutter intrinsic size 回傳給原生 child，也沒有同步原生 presentation-layer 動畫。
+**Key assumptions awaiting validation:** whether empty native children produce
+the same Arrangement decisions as real content; whether the transparent container
+has any visible decorations; and whether safe areas, pane visibility, transitions,
+and coordinates stay aligned with Flutter. Visibility currently uses the native
+hierarchy and placement state; this has not been confirmed to capture the full
+Arrangement visibility semantics. The prototype does not pass Flutter intrinsic
+sizes to native children or synchronize native presentation-layer animations.
 
-範例入口：`example/lib/arrangement_demo.dart`；原診斷畫面也有
-「Open split / span prototype」按鈕。包含計數器、文字輸入與捲動內容，方便後續檢查
-切換時的狀態保存。原生 split 無法使用的平台上仍可試 span。
+The example is in `example/lib/arrangement_demo.dart`. The diagnostic page also
+has an "Open split / span prototype" button. Counters, text input, and scrolling
+content help check state preservation when switching modes. You can still try
+span on platforms where native split is unavailable.
 
-## 原生工具列（③）
+## Native toolbars
 
-在 App 層放置一個 `NativeToolbarHost`。Flutter 提供內容與動作，Swift 使用
-`UINavigationController` 管理的原生工具列，外觀和適應布局交給 iOS。
+Place one `NativeToolbarHost` at the app level. Flutter supplies content and
+actions; Swift uses native toolbars managed by `UINavigationController`, leaving
+their appearance and adaptive layout to iOS.
 
 ```dart
 MaterialApp(
   builder: (context, child) => NativeToolbarHost(
     configuration: NativeToolbarConfiguration(
-      title: '文件',
+      title: 'Documents',
       items: const [
         NativeToolbarItem(
           id: 'share',
-          title: '分享',
+          title: 'Share',
           systemImage: 'square.and.arrow.up',
           priority: NativeToolbarPriority.high,
         ),
         NativeToolbarItem(
           id: 'refresh',
-          title: '重新整理',
+          title: 'Refresh',
           systemImage: 'arrow.clockwise',
           placement: NativeToolbarPlacement.bottom,
           axis: NativeToolbarAxis.verticalPreferred,
         ),
       ],
       overflowItems: const [
-        NativeToolbarItem(id: 'settings', title: '設定', systemImage: 'gearshape'),
+        NativeToolbarItem(id: 'settings', title: 'Settings', systemImage: 'gearshape'),
       ],
     ),
     onAction: (id) {
-      // 交給自己的 Flutter 業務邏輯，例如 share / refresh / settings。
+      // Handle actions in Flutter, such as share, refresh, or settings.
     },
     onStatusChanged: (status) => print(status.availability),
     onError: (error, stack) => print(error),
@@ -206,67 +246,80 @@ MaterialApp(
 );
 ```
 
-`NativeToolbarItem` 提供：
+`NativeToolbarItem` exposes the following options:
 
-| 參數 | 說明 |
+| Parameter | Description |
 | --- | --- |
-| `id` / `title` | 必填；id 在一般項目和更多選單之間也不能重複 |
-| `systemImage` | 選填 SF Symbols 名稱；系統找不到圖示時保留文字 |
-| `enabled` | 是否可操作，預設 true |
-| `visible` | 是否加入工具列／選單，預設 true |
-| `placement` | leading、trailing（預設）、bottom |
-| `priority` | automatic、low、high；影響收進更多選單的先後 |
-| `axis` | automatic、horizontalOnly、verticalPreferred |
+| `id` / `title` | Required; IDs must be unique across regular and overflow items |
+| `systemImage` | Optional SF Symbols name; text is retained if the symbol cannot be found |
+| `enabled` | Whether the action is enabled; defaults to true |
+| `visible` | Whether the item is included in the toolbar/menu; defaults to true |
+| `placement` | `leading`, `trailing` (default), or `bottom` |
+| `priority` | `automatic`, `low`, or `high`; affects the order in which items move into overflow |
+| `axis` | `automatic`, `horizontalOnly`, or `verticalPreferred` |
 
-`overflowItems` 是持續放在系統「⋯」的動作；它們的 placement／priority／axis
-不參與工具列布局。`high` 表示盡量較晚收起，並非永遠保持顯示。
-直向工具列的實際出現、位置和收納時機仍由系統按空間決定。
-目前沒有提供自訂外觀、Dart widget 作為原生按鈕、badge、群組或原生分頁列。
+`overflowItems` are actions kept in the system "⋯" menu. Their `placement`,
+`priority`, and `axis` do not participate in toolbar layout. A `high` priority
+asks the system to move an item into overflow later; it does not guarantee that
+the item stays visible. The system decides whether and where a vertical toolbar
+appears and when items move into overflow based on available space.
+Custom styling, Dart widgets as native buttons, badges, groups, and native tab
+bars are not exposed in this version.
 
-**容器與頁面整合**
+**Container and navigation integration**
 
-- 第一版支援一般 Flutter App：registrar 的 Flutter controller 必須是自己 window
-  的 root controller，且沒有其他父容器。既有 UIKit 導航／分頁／add-to-app
-  階層會回報 `hostUnsupported`，不擅自重組既有階層。
-- 每個 engine 同時只能有一個工具列 owner；衝突回報 `busy`。請在 App builder
-  放置一次，隨 Flutter route 更新 configuration，不要每一頁都建立 host。
-- 原生容器將 Flutter view 約束在原生內容 safe area，跟隨頂部／底部／側邊工具列
-  調整尺寸。Dart 不需要猜測 bar 高度或額外加一次工具列 Padding。
-  這版 Flutter 內容不延伸到原生 bar 後方；①的座標相對於縮放後的 Flutter view。
-- Flutter Navigator 繼續管理 routes。需要返回按鈕時提供一個 action，並在 Dart
-  呼叫自己 Navigator 的 maybePop。沒有自動同步 route 標題，也沒有建立 UIKit
-  的返回堆疊／原生 interactive-pop 手勢。
-- 更新設定不重建容器；舊版本、已移除、隱藏或停用的按鈕事件會被忽略。
-- widget 移除時釋放原生容器，恢復原 Flutter root。若 App 已替換 window root，
-  清理不會覆蓋新 root。若仍有原生 modal 或轉場，等待其結束後才還原，
-  不會自行 dismiss 使用者的原生畫面。
+- This version supports standalone Flutter apps: the registrar's Flutter
+  controller must be its window's root controller, with no parent container.
+  Existing UIKit navigation, tab, or add-to-app hierarchies return
+  `hostUnsupported`; the plugin does not rearrange them.
+- Each engine can have only one toolbar owner at a time. Conflicts return `busy`.
+  Add the host once in the app builder and update its configuration as Flutter
+  routes change, rather than creating a host on each page.
+- The native container constrains the Flutter view to the native content safe
+  area, resizing it around top, bottom, or side toolbars. Dart does not need to
+  estimate bar heights or add extra toolbar padding. Flutter content does not
+  extend behind native bars in this version. Reserved-region coordinates are
+  relative to the resized Flutter view.
+- Flutter's `Navigator` continues to manage routes. For a back button, provide an
+  action and call your navigator's `maybePop` in Dart. Route titles are not
+  automatically synchronized, and no UIKit navigation stack or native
+  interactive-pop gesture is created.
+- Configuration updates do not rebuild the container. Events from outdated
+  configurations or removed, hidden, or disabled buttons are ignored.
+- Removing the widget releases the native container and restores the original
+  Flutter root. If the app has replaced the window root, cleanup does not
+  overwrite it. When a native modal or transition is active, restoration waits
+  for it to finish instead of dismissing the user's native screen.
 
-`NativeToolbarController` 也可直接使用：訂閱 `actions`、呼叫 `setConfiguration()`，
-用完後 `await dispose()`。dispose 會等待實際還原；native modal 未關閉時可能持續等待。
-由 widget 管理時，dispose 的非同步錯誤會交給 onError 或 FlutterError。
+You can also use `NativeToolbarController` directly: subscribe to `actions`, call
+`setConfiguration()`, and `await dispose()` when finished. Disposal waits for
+actual restoration and may remain pending while a native modal is open. When the
+widget manages the controller, asynchronous disposal errors go to `onError` or
+`FlutterError`.
 
-| 狀態 | 意義 |
+| Status | Meaning |
 | --- | --- |
-| `available` | 已建立／更新原生工具列，不代表目前必定顯示在側邊 |
-| `viewUnavailable` | window 尚未附著、不是前景，或原生呈現／轉場中；Host 會在前景重試 |
-| `hostUnsupported` | Flutter controller 已在其他原生容器中，或不是 window root |
-| `busy` | 另一個工具列 owner 使用中 |
-| `osUnavailable` | 本模組要求 iOS 27.1；未建立工具列 |
-| `unsupportedPlatform` | 非 iOS；保留 Flutter child，不繪製替代工具列 |
-| `detached` | 工具列 owner 已釋放 |
+| `available` | The native toolbar was created/updated; it is not necessarily displayed at the side |
+| `viewUnavailable` | The window is unattached, inactive, or presenting/transitioning native UI; the host retries in the foreground |
+| `hostUnsupported` | The Flutter controller is inside another native container or is not the window root |
+| `busy` | Another toolbar owner is active |
+| `osUnavailable` | This module requires iOS 27.1; no toolbar was created |
+| `unsupportedPlatform` | The platform is not iOS; the Flutter child remains, without a substitute toolbar |
+| `detached` | The toolbar owner has been released |
 
-缺少 plugin 或通道失敗會拋出錯誤。請在 main UI isolate 使用。
-hot reload 可更新設定；Dart hot restart 後，新 UI client 會先還原舊原生 owner，
-再建立新工具列。若原生 modal 尚未關閉，此初始化會等待其結束。
+A missing plugin or channel failure throws an error. Use this API on the main UI
+isolate. Hot reload can update the configuration. After a Dart hot restart, the
+new UI client restores the previous native owner before creating a new toolbar.
+If a native modal remains open, initialization waits for it to close.
 
-## 鉸鏈狀態與角度（④）
+## Hinge state and angle
 
 ```dart
 final subscription = const NativeHinge().watch().listen(
   (snapshot) {
     if (snapshot.isAvailable) {
       print('${snapshot.status}: ${snapshot.angleDegrees}°');
-      // angleRadians 也可用；交給動畫、音效或其他互動。
+      // angleRadians is also available for animation, sound, or other interactions.
     } else {
       print(snapshot.availability);
     }
@@ -276,48 +329,59 @@ final subscription = const NativeHinge().watch().listen(
 await subscription.cancel();
 ```
 
-| availability | 意義 |
+| Availability | Meaning |
 | --- | --- |
-| `available` | 有原生狀態與角度；`status` 和 `angleDegrees` 都非 null |
-| `waiting` | 原生觀察器已附著，但尚未收到鉸鏈回呼 |
-| `noHinge` | 原生回呼明確表示沒有鉸鏈 |
-| `inactive` | 所屬 scene 暫停作用，清除舊角度 |
-| `viewUnavailable` | 尚無可附著的 Flutter controller/view/window |
-| `osUnavailable` | 執行系統低於 iOS 27.1 |
-| `unsupportedPlatform` | 目前不是 iOS |
+| `available` | Native state and angle are available; `status` and `angleDegrees` are non-null |
+| `waiting` | The native observer is attached but has not received a hinge callback |
+| `noHinge` | The native callback explicitly reports that no hinge is present |
+| `inactive` | The owning scene is inactive; the previous angle is cleared |
+| `viewUnavailable` | No Flutter controller/view/window is available for attachment |
+| `osUnavailable` | The operating system is older than iOS 27.1 |
+| `unsupportedPlatform` | The current platform is not iOS |
 
-`status` 包含 `closed`、`partiallyOpen`、`fullyOpen`、`unknown`。
-角度直接使用原生的 degrees；不裁切為 0–180、不推測螢幕位置。
-資料不可用時角度是 `null`，真實 0 度仍是有效數值。
-`watch().first` 可能取得 `waiting`，不保證已取得硬體測量。
-未有初始回呼時保持 `waiting`；不以逾時推斷沒有鉸鏈。
+`status` values are `closed`, `partiallyOpen`, `fullyOpen`, and `unknown`.
+Angles use the native degree values directly, without clamping to 0–180 or
+inferring screen positions. Unavailable angles are `null`; a real zero-degree
+reading remains valid. `watch().first` may return `waiting` rather than a hardware
+measurement. The state stays `waiting` until the initial callback; a timeout is
+not used to infer that no hinge exists.
 
-Swift 在目前 engine 的 Flutter controller 內掛載透明、不接收觸控和輔助使用焦點的
-`UIHostingController`，由 `onHingeChange` 取得資料。角度由原生回呼推送；
-每 250 ms 的前景檢查只用來偵測 host 附著／更換，不是輪詢角度。
-背景或 view 分離會移除 observer；重新附著後等待新的回呼。
-取消最後一位訂閱者時移除 controller、生命週期監聽與快取；舊 observer 的延遲回呼會被忽略。
+Swift attaches a transparent `UIHostingController` inside the current engine's
+Flutter controller. It does not receive touch input or accessibility focus and
+obtains data through `onHingeChange`. Native callbacks push angle updates. A
+foreground check every 250 ms only detects host attachment or replacement; it
+does not poll the angle. Entering the background or detaching the view removes
+the observer. Reattachment waits for a fresh callback. Canceling the last listener
+removes the controller, lifecycle listeners, and cache. Delayed callbacks from
+old observers are ignored.
 
-兩個模組各自共用其原生訂閱，並各自管理快取／取消，不互相停止。
-鉸鏈沒有 `read()`：目前來源是回呼，不把快取包裝成即時硬體查詢。
-通道啟動失敗會送出 stream error 並關閉該次觀察，可重新訂閱。
-原生端結束串流後若清理失敗，錯誤會先送到 onError，再發出 onDone；
-主動取消訂閱的清理錯誤則由 cancel() 的 Future 回報。
+The reserved-region and hinge modules each share their own native subscription
+and manage their own caching and cancellation; stopping one does not stop the
+other. The hinge API has no `read()` method because its source is callback-based;
+cached data is not presented as a live hardware query. Channel startup failures
+emit a stream error and close that observation session; subscribe again to retry.
+If cleanup fails after the native stream ends, the error reaches `onError` before
+`onDone`. Explicit cancellation reports cleanup failures through the Future
+returned by `cancel()`.
 
-**角度用於互動與效果；內容避讓仍使用①的區域資料。**
+**Use angles for interactions and effects. Use reserved-region data to keep
+content clear of obstructed or divided areas.**
 
-## 回傳資料與座標
+## Returned data and coordinates
 
-- `division`：例如將內容分成兩側的摺疊區域。
-- `occlusion`：例如鏡頭造成的遮擋區域。
-- 只查詢目前 **active** 的區域；不提供 inactive 區域或姿態推測。鉸鏈角度由獨立 API 提供。
-- `bounds` 使用目前 Flutter host view 的座標，以 UIKit points 表示。
-  在標準 iOS Flutter embedder 中，它對應 Flutter logical pixels。
-- `viewSize` 是被查詢 view 的尺寸，不是整台裝置的螢幕尺寸。
-- Swift 透過該 engine 的 registrar 取得 view；不查詢全域 key window。
-  本版限標準單一 Flutter view／engine；未宣稱支援每個 engine 多 view。
+- `division`: for example, a fold region dividing content into two sides.
+- `occlusion`: for example, an area obstructed by a camera.
+- Only currently **active** regions are queried. Inactive regions and inferred
+  postures are not provided. Hinge angles have a separate API.
+- `bounds` uses the current Flutter host view's coordinate system, in UIKit
+  points. In the standard iOS Flutter embedder, these correspond to Flutter
+  logical pixels.
+- `viewSize` is the size of the queried view, not the device's full screen.
+- Swift gets the view from the engine's registrar rather than a global key window.
+  This version targets a standard single Flutter view per engine and does not
+  claim support for multiple views within one engine.
 
-若 widget 位於 SafeArea、AppBar 或 Padding 之內，必須轉換座標：
+Convert coordinates when a widget sits inside `SafeArea`, `AppBar`, or `Padding`:
 
 ```dart
 final box = context.findRenderObject() as RenderBox;
@@ -325,52 +389,69 @@ final origin = box.localToGlobal(Offset.zero);
 final localBounds = region.boundsRelativeTo(origin);
 ```
 
-這個輔助方法只處理平移。旋轉／縮放的 widget 要另外套用完整 transform。
-查詢結果是非同步快照；旋轉、resize 期間不要把上一個 viewSize 的快照當成
-目前畫面的精確位置。範例將 overlay 放在整個 Flutter view 的 Stack 中。
+This helper handles translation only. Rotated or scaled widgets require the full
+transform to be applied separately. Query results are asynchronous snapshots;
+during rotation or resizing, do not treat a snapshot with an old `viewSize` as
+the exact geometry of the current frame. The example places its overlay in a
+`Stack` covering the entire Flutter view.
 
-## 支援狀態
+## Reserved-region availability
 
-| 狀態 | 意義 |
+| Status | Meaning |
 | --- | --- |
-| `available` | API 查詢成功，`regions` 一定是集合，可能為空 |
-| `inactive` | view 所屬 scene 目前不是 foregroundActive，幾何資料為 null |
-| `osUnavailable` | 執行系統低於 iOS 27.1 |
-| `viewUnavailable` | engine 尚未附著可查詢的原生 view |
-| `unsupportedPlatform` | 此 iOS plugin 不處理目前平台 |
-| `pluginUnavailable` | `read()` 找不到原生通道實作 |
+| `available` | The API query succeeded; `regions` is a collection that may be empty |
+| `inactive` | The view's scene is not `foregroundActive`; geometry is null |
+| `osUnavailable` | The operating system is older than iOS 27.1 |
+| `viewUnavailable` | The engine has no attached native view that can be queried |
+| `unsupportedPlatform` | This iOS plugin does not handle the current platform |
+| `pluginUnavailable` | `read()` could not find the native channel implementation |
 
-不支援時 `regions` 是 `null`，避免把「不知道」誤當成「沒有」。
-`available` 表示 API 可查詢，並不表示裝置一定有鉸鏈。
+When unavailable, `regions` is `null` so that unknown geometry is not mistaken for
+an absence of regions. `available` means the API can be queried; it does not imply
+that the device has a hinge.
 
-## 觀察方式與限制
+## Observation strategy and limitations
 
-原生訂閱以前景最多 10 Hz 取樣，去除相同快照。
-以目前 Flutter view 所屬 scene 的生命週期控制取樣，不借用其他視窗的 active 狀態。
-scene 暫停時送出 `inactive` 快照，清除幾何資料並停止 timer；恢復時重新查詢。
-尚未附著 view 時，前景持續檢查 attachment；沒有訂閱時移除 timer 與生命週期觀察。
-同種類的原生區域按座標排序，避免只是陣列順序改變就重複發送事件。
-這是第一版的 observation 策略，**不是 Apple 的原生區域變更通知 API**，
-不保證逐幀同步，也不適合拿來驅動鉸鏈動畫。
-執行系統版本不足時回報 `osUnavailable`，不啟動取樣。
+Native subscriptions sample at up to 10 Hz in the foreground and suppress
+identical snapshots. Sampling follows the lifecycle of the scene owning the
+current Flutter view, rather than another window's activity. When that scene
+becomes inactive, the stream emits an `inactive` snapshot, clears geometry, and
+stops the timer. Queries resume when the scene becomes active.
 
-## 編譯需求與後續驗證
+While the view is unattached, attachment checks continue in the foreground.
+Timers and lifecycle observers are removed when no subscribers remain. Native
+regions of the same kind are sorted by coordinates so that array order changes
+alone do not emit duplicate events.
 
-Swift 原始碼直接引用新 API，CocoaPods 與 Swift Package Manager 都不需要
-額外啟用條件。編譯時需使用包含 `UIView.reservedRegions(kind:)`、
-`.division`、`.occlusion`、`frame`，以及 SwiftUI `onHingeChange`／鉸鏈狀態與角度宣告的 SDK。
+This is the initial observation strategy, **not an Apple native region-change
+notification API**. It does not guarantee frame-by-frame synchronization and is
+not suitable for driving hinge animations. Unsupported OS versions report
+`osUnavailable` without starting sampling.
 
-`#available(iOS 27.1, *)` 保留舊系統的執行時回退行為；它不會讓舊 SDK
-取得缺少的宣告。2026-09-17 已執行 Dart 靜態分析、41 個 package 測試及 1 個範例
-widget 測試，全部通過；Swift 僅通過語法解析，新 SDK 的編譯與裝置驗證仍待完成。
-詳見 [VALIDATION.md](VALIDATION.md)。
+## Build requirements and pending validation
 
-後續驗證包含：新 API 編譯、摺疊／展開、內外螢幕、分割視窗、鏡頭開關、
-旋轉、前背景、SafeArea 座標轉換，以及訂閱取消與 view 附著／分離。
-鉸鏈還需驗證初始回呼時機、狀態 case 宣告、角度單位、透明 SwiftUI observer 的
-事件接收與觸控／輔助使用無干擾，以及取消後不再回報舊事件。
+The Swift source references the new APIs directly. Neither CocoaPods nor Swift
+Package Manager requires an additional opt-in flag. Compilation requires an SDK
+containing `UIView.reservedRegions(kind:)`, `.division`, `.occlusion`, `frame`,
+and the SwiftUI `onHingeChange`, hinge state, and angle declarations.
 
-## 驗證
+`#available(iOS 27.1, *)` preserves runtime fallback behavior on older operating
+systems; it does not supply declarations missing from an older SDK. On
+2026-09-17, Dart static analysis, 41 package tests, and one example widget test
+all passed. Swift passed syntax parsing only; compilation with the required SDK
+and device validation remain pending. See [VALIDATION.md](VALIDATION.md).
+
+Pending checks include compilation against the new APIs, folding/unfolding,
+inner/outer displays, split windows, camera toggling, rotation, foreground and
+background transitions, `SafeArea` coordinate conversion, subscription
+cancellation, and view attachment/detachment.
+
+Hinge validation also needs to cover initial callback timing, state case
+declarations, angle units, event delivery to the transparent SwiftUI observer,
+absence of touch/accessibility interference, and suppression of stale events
+after cancellation.
+
+## Validation
 
 ```sh
 flutter pub get --offline
@@ -380,17 +461,18 @@ cd example
 flutter pub get --offline
 flutter test
 flutter build ios --simulator --debug --no-codesign
-# 有可用 iOS simulator / device 後：
+# Once an iOS simulator or device is available:
 flutter test integration_test/plugin_integration_test.dart -d <device-id>
 ```
 
-Dart mock tests 驗證通道協定，不代表新 Apple API 已通過硬體測試。
-具體已執行的檢查見 `VALIDATION.md`。
+Dart mock tests validate the channel protocol; they do not establish that the new
+Apple APIs have passed hardware tests. See `VALIDATION.md` for the checks that
+have actually been performed.
 
-## 官方依據
+## Official references
 
-- [Apple：Reserved Regions 與 Arrangement views](https://developer.apple.com/videos/play/tech-talks/111463/)
-- [Apple：原生工具列與 Duo 側邊排列](https://developer.apple.com/videos/play/tech-talks/111462/)
-- [Apple：鉸鏈、場景與多螢幕](https://developer.apple.com/videos/play/tech-talks/111464/)
-- [Apple：Duo 工具與 SDK 狀態](https://developer.apple.com/iphone-duo/)
-- [Flutter：displayFeatures 目前只在 Android 填入資料](https://api.flutter.dev/flutter/widgets/MediaQueryData/displayFeatures.html)
+- [Apple: Reserved Regions and Arrangement views](https://developer.apple.com/videos/play/tech-talks/111463/)
+- [Apple: Native toolbars and Duo side placement](https://developer.apple.com/videos/play/tech-talks/111462/)
+- [Apple: Hinges, scenes, and multiple displays](https://developer.apple.com/videos/play/tech-talks/111464/)
+- [Apple: Duo tools and SDK status](https://developer.apple.com/iphone-duo/)
+- [Flutter: displayFeatures data is currently populated only on Android](https://api.flutter.dev/flutter/widgets/MediaQueryData/displayFeatures.html)
