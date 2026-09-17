@@ -31,7 +31,7 @@
 - 已移除自訂 SDK 編譯開關，不需要額外設定 Swift flag。
 - 使用包含相應 API 宣告的 SDK 編譯；執行時保留 iOS 27.1 版本檢查。
 - 只傳遞原生 API 回傳的資料，不以螢幕尺寸推測摺痕。
-- `0.1.0-dev.1` 為實驗性預發布版本；採用 [MIT 授權](LICENSE)。
+- `0.1.0-dev.2` 為實驗性預發布版本；採用 [MIT 授權](LICENSE)。
 - 原生 Swift 程式碼需要包含相應 iOS 27.1 API 的 SDK；Xcode 26.4 無法編譯這些宣告。
 
 ## 安裝
@@ -40,7 +40,7 @@
 
 ```yaml
 dependencies:
-  iphone_duo_layout: 0.1.0-dev.1
+  iphone_duo_layout: 0.1.0-dev.2
 ```
 
 ## 使用

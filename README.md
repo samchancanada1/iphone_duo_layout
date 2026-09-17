@@ -39,7 +39,7 @@ with the required native SDK and device validation are still pending.**
 - Compile with an SDK that includes the referenced API declarations. Runtime checks
   for iOS 27.1 remain in place.
 - Only native API data is reported; the package does not infer folds from screen dimensions.
-- `0.1.0-dev.1` is an experimental prerelease under the [MIT license](LICENSE).
+- `0.1.0-dev.2` is an experimental prerelease under the [MIT license](LICENSE).
 - The Swift source requires an SDK with the corresponding iOS 27.1 API declarations;
   Xcode 26.4 cannot compile these references.
 
@@ -49,7 +49,7 @@ Add the prerelease version to your application's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  iphone_duo_layout: 0.1.0-dev.1
+  iphone_duo_layout: 0.1.0-dev.2
 ```
 
 ## Usage

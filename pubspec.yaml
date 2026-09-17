@@ -1,6 +1,6 @@
 name: iphone_duo_layout
 description: 'Native iPhone Duo layout adaptation for Flutter: reserved regions, hinge updates, adaptive layouts and system toolbars.'
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 repository: https://github.com/samchancanada1/iphone_duo_layout
 
 screenshots:

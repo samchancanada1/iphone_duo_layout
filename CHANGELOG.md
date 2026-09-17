@@ -1,3 +1,10 @@
+## 0.1.0-dev.2
+
+- Make English the default README language.
+- Add a Traditional Chinese README with language navigation links for GitHub and pub.dev.
+- Keep code examples, comments, and display labels in English in both documents.
+- Documentation-only release; API behavior and native validation limitations are unchanged.
+
 ## 0.1.0-dev.1
 
 - Initial experimental prerelease under the MIT license.
